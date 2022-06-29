@@ -1,7 +1,4 @@
 {
-    "files.associations": {
-        "background.h": "c",
-        "common.h": "c",
-        "stdio.h": "c"
-    }
+    "workbench.preferredDarkColorTheme": "Visual Studio Dark - C++",
+    "c-cpp-compile-run.c-compiler": "/usr/bin/gcc"
 }

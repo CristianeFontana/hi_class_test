@@ -717,6 +717,9 @@ int perturb_indices_of_perturbs(
   ppt->has_source_delta_fld = _FALSE_;
   ppt->has_source_delta_scf = _FALSE_;
   ppt->has_source_phi_smg = _FALSE_;  //scalar field
+  
+  ppt->has_source_Geff_smg = _FALSE_;
+  
   ppt->has_source_delta_dr = _FALSE_;
   ppt->has_source_delta_ur = _FALSE_;
   ppt->has_source_delta_ncdm = _FALSE_;
@@ -818,6 +821,7 @@ int perturb_indices_of_perturbs(
           ppt->has_source_delta_ur = _TRUE_;
 	if (pba->has_smg == _TRUE_)
 	  ppt->has_source_phi_smg = _TRUE_;
+	  ppt->has_source_Geff_smg = _TRUE_;
         if (pba->has_dr == _TRUE_)
           ppt->has_source_delta_dr = _TRUE_;
         if (pba->has_ncdm == _TRUE_)
@@ -902,6 +906,9 @@ int perturb_indices_of_perturbs(
       class_define_index(ppt->index_tp_delta_fld,  ppt->has_source_delta_fld, index_type,1);
       class_define_index(ppt->index_tp_delta_scf,  ppt->has_source_delta_scf, index_type,1);
       class_define_index(ppt->index_tp_phi_smg,    ppt->has_source_phi_smg,   index_type,1);
+      /* mod */
+      class_define_index(ppt->index_tp_Geff_smg,    ppt->has_source_Geff_smg,   index_type,1);
+      /* end mod*/
       class_define_index(ppt->index_tp_delta_dr,   ppt->has_source_delta_dr, index_type,1);
       class_define_index(ppt->index_tp_delta_ur,   ppt->has_source_delta_ur,  index_type,1);
       class_define_index(ppt->index_tp_delta_ncdm1,ppt->has_source_delta_ncdm,index_type,pba->N_ncdm);
@@ -2765,6 +2772,8 @@ int perturb_prepare_output(struct background * pba,
 
       class_store_columntitle(ppt->scalar_titles,"h_prime",pba->has_smg);
       class_store_columntitle(ppt->scalar_titles,"eta",pba->has_smg);
+	    
+      class_store_columntitle(ppt->scalar_titles,"Geff_smg",pba->has_smg);
 
       ppt->number_of_scalar_titles =
         get_number_of_titles(ppt->scalar_titles);
@@ -7462,9 +7471,98 @@ int perturb_sources(
     }
 
     /* phi_smg TODO: either change the name of the source or write delta_phi_dot */
+    /* MINHA MODIFICAÇÃO */
+    
     if (ppt->has_source_phi_smg == _TRUE_) {
       _set_source_(ppt->index_tp_phi_smg) = pvecmetric[ppw->index_mt_vx_smg];
+      
+      /* definindo os alphas */
+      double bra = ppw->pvecback[pba->index_bg_braiding_smg];
+      
+      double run = ppw->pvecback[pba->index_bg_mpl_running_smg];
+      
+      double kin = ppw->pvecback[pba->index_bg_kineticity_smg];
+      
+      double ten = ppw->pvecback[pba->index_bg_tensor_excess_smg];
+      
+      /* definindo densidades e outras quantidades necessárias */
+      double a = ppw->pvecback[pba->index_bg_a];
+      
+      double rho_m = ppw->pvecback[pba->index_bg_rho_tot_wo_smg];
+      
+      double H = ppw->pvecback[pba->index_bg_H];
+      
+      double H_prime = ppw->pvecback[pba->index_bg_H_prime];
+        
+      double H_prime_prime = ppw->pvecback[pba->index_bg_H_prime_prime];
+      
+      double Omega_m = rho_m / (3.*H*H);
+      
+      double qsi = H_prime / (a*H*H);
+        
+      double qsi_p = H_prime_prime / (a*a*H*H) - H_prime/(a*H) - pow(H_prime,2)/(a*a*H*H*H);
+      
+      double bra_p = ppw->pvecback[pba->index_bg_braiding_prime_smg];
+      
+      double rho_g = ppw->pvecback[pba->index_bg_rho_g];
+      
+      double rho_ur = ppw->pvecback[pba->index_bg_rho_ur];
+      
+      double Omega_g = rho_g / (3.*H*H);
+      
+      double Omega_ur = rho_ur / (3.*H*H);
+      
+      double w_matter = (Omega_g/3. + Omega_ur/3.) / Omega_m;
+      
+      /* para o caso dos neutrinos */
+        
+      double rho_ncdm_bg = 0.;
+      
+      double p_ncdm_bg = 0.;
+        
+      double w_ncdm_bg = 0.;
+        
+      double Omega_ncdm_bg = 0.;
+      
+      int n_ncdm;
+       
+      if (pba->has_ncdm == _TRUE_) {
+        for(n_ncdm=0; n_ncdm<pba->N_ncdm; n_ncdm++){
+           rho_ncdm_bg += ppw->pvecback[pba->index_bg_rho_ncdm1+n_ncdm];
+           p_ncdm_bg += ppw->pvecback[pba->index_bg_p_ncdm1+n_ncdm];
+           w_ncdm_bg += p_ncdm_bg/rho_ncdm_bg;
+           Omega_ncdm_bg += rho_ncdm_bg / (3.*H*H);
+          
+           w_matter += (w_ncdm_bg*Omega_ncdm_bg) / Omega_m;
+        }
+      }
+      
+      /* definindo as quantidades necessárias para escrever Y */
+      double M2 = ppw->pvecback[pba->index_bg_M2_smg];
+      
+      double Omega_mtildo = rho_m / (3.*H*H*M2);
+      
+      double alpha1 = bra + ten*(bra - 2.) + 2.*run;
+      
+      double alpha2 = bra*qsi + bra_p/(a*H) -2.*qsi -3.*(1.+w_matter)*Omega_mtildo;
+      
+      double mu2 = -3.*(2.*qsi*qsi +qsi_p + qsi*(3.+run))*bra -3.*qsi*alpha2;
+      
+      double h1 = (ten+1.) / M2;
+      
+      double h3 = (alpha1*(2. - bra) + 2.*alpha2) / (2.*H*H*mu2);
+      
+      double h5 = (alpha1*((run+1.) / (ten+1.)) + alpha2) / (H*H*mu2);
+        
+        
+      double Geff_smg = h1*(1. + pow(k,2)*h5) / (1. + pow(k,2)*h3);
+        
+      _set_source_(ppt->index_tp_Geff_smg) = Geff_smg;
+
+      
     }
+
+    /* FIM DA MINHA MODIFICAÇÃO */
 
     /* delta_dr */
     if (ppt->has_source_delta_dr == _TRUE_) {
@@ -7653,7 +7751,7 @@ int perturb_print_variables(double tau,
   double delta_rho_scf=0., rho_plus_p_theta_scf=0.;
   double delta_scf=0., theta_scf=0.;
   double V_x_smg=0., V_x_prime_smg=0.;
-  double h_prime_smg=0., eta_smg=0.;
+  double h_prime_smg=0., eta_smg=0., Geff1=0;
   /** - ncdm sector begins */
   int n_ncdm;
   double *delta_ncdm=NULL, *theta_ncdm=NULL, *shear_ncdm=NULL, *delta_p_over_delta_rho_ncdm=NULL;
@@ -7922,6 +8020,89 @@ int perturb_print_variables(double tau,
       V_x_prime_smg = ppw->pvecmetric[ppw->index_mt_vx_prime_smg];
       h_prime_smg = ppw->pvecmetric[ppw->index_mt_h_prime];
       eta_smg = y[ppw->pv->index_pt_eta];
+      
+      
+      /* definindo os alphas */
+      double bra = ppw->pvecback[pba->index_bg_braiding_smg];
+      
+      double run = ppw->pvecback[pba->index_bg_mpl_running_smg];
+      
+      double kin = ppw->pvecback[pba->index_bg_kineticity_smg];
+      
+      double ten = ppw->pvecback[pba->index_bg_tensor_excess_smg];
+      
+      /* definindo densidades e outras quantidades necessárias */
+      double a = ppw->pvecback[pba->index_bg_a];
+      
+      double rho_m = ppw->pvecback[pba->index_bg_rho_tot_wo_smg];
+      
+      double H = ppw->pvecback[pba->index_bg_H];
+      
+      double H_prime = ppw->pvecback[pba->index_bg_H_prime];
+        
+      double H_prime_prime = ppw->pvecback[pba->index_bg_H_prime_prime];
+      
+      double Omega_m = rho_m / (3.*H*H);
+      
+      double qsi = H_prime / (a*H*H);
+        
+      double qsi_p = H_prime_prime / (a*a*H*H) - H_prime/(a*H) - pow(H_prime,2)/(a*a*H*H*H);
+      
+      double bra_p = ppw->pvecback[pba->index_bg_braiding_prime_smg];
+      
+      double rho_g = ppw->pvecback[pba->index_bg_rho_g];
+      
+      double rho_ur = ppw->pvecback[pba->index_bg_rho_ur];
+      
+      double Omega_g = rho_g / (3.*H*H);
+      
+      double Omega_ur = rho_ur / (3.*H*H);
+      
+      double w_matter = (Omega_g/3. + Omega_ur/3.) / Omega_m;
+      
+      /* para o caso dos neutrinos */
+        
+      double rho_ncdm_bg = 0.;
+      
+      double p_ncdm_bg = 0.;
+        
+      double w_ncdm_bg = 0.;
+        
+      double Omega_ncdm_bg = 0.;
+      
+      int n_ncdm;
+       
+      if (pba->has_ncdm == _TRUE_) {
+        for(n_ncdm=0; n_ncdm<pba->N_ncdm; n_ncdm++){
+           rho_ncdm_bg += ppw->pvecback[pba->index_bg_rho_ncdm1+n_ncdm];
+           p_ncdm_bg += ppw->pvecback[pba->index_bg_p_ncdm1+n_ncdm];
+           w_ncdm_bg += p_ncdm_bg/rho_ncdm_bg;
+           Omega_ncdm_bg += rho_ncdm_bg / (3.*H*H);
+          
+           w_matter += (w_ncdm_bg*Omega_ncdm_bg) / Omega_m;
+        }
+      }
+      
+      /* definindo as quantidades necessárias para escrever Y */
+      double M2 = ppw->pvecback[pba->index_bg_M2_smg];
+      
+      double Omega_mtildo = rho_m / (3.*H*H*M2);
+      
+      double alpha1 = bra + ten*(bra - 2.) + 2.*run;
+      
+      double alpha2 = bra*qsi + bra_p/(a*H) -2.*qsi -3.*(1.+w_matter)*Omega_mtildo;
+      
+      double mu2 = -3.*(2.*qsi*qsi +qsi_p + qsi*(3.+run))*bra -3.*qsi*alpha2;
+      
+      double h1 = (ten+1.) / M2;
+      
+      double h3 = (alpha1*(2. - bra) + 2.*alpha2) / (2.*H*H*mu2);
+      
+      double h5 = (alpha1*((run+1.) / (ten+1.)) + alpha2) / (H*H*mu2);
+        
+        
+      Geff1 = h1*(1. + pow(k,2)*h5) / (1. + pow(k,2)*h3);
+      
     }
 
     /* converting synchronous variables to newtonian ones */
@@ -8036,6 +8217,7 @@ int perturb_print_variables(double tau,
     class_store_double(dataptr, V_x_prime_smg, pba->has_smg, storeidx);
     class_store_double(dataptr, h_prime_smg, pba->has_smg, storeidx);
     class_store_double(dataptr, eta_smg, pba->has_smg, storeidx);
+    class_store_double(dataptr, Geff1, pba->has_smg, storeidx);
 
 
   }

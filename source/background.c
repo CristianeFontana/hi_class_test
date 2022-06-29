@@ -3059,6 +3059,9 @@ int background_output_titles(struct background * pba,
     class_store_columntitle(titles,"lambda_11_p",pba->has_smg);
     class_store_columntitle(titles,"cs2num",pba->has_smg);
     class_store_columntitle(titles,"cs2num_p",pba->has_smg);
+    class_store_columntitle(titles,"H_prime",pba->has_smg);
+    class_store_columntitle(titles,"H_prime_prime",pba->has_smg);
+    class_store_columntitle(titles,"rho_m",pba->has_smg);
   }
 
 
@@ -3150,6 +3153,9 @@ int background_output_data(
       class_store_double(dataptr,pvecback[pba->index_bg_lambda_11_prime_smg],pba->has_smg,storeidx);
       class_store_double(dataptr,pvecback[pba->index_bg_cs2num_smg],pba->has_smg,storeidx);
       class_store_double(dataptr,pvecback[pba->index_bg_cs2num_prime_smg],pba->has_smg,storeidx);
+      class_store_double(dataptr,pvecback[pba->index_bg_H_prime],pba->has_smg,storeidx);
+      class_store_double(dataptr,pvecback[pba->index_bg_H_prime_prime],pba->has_smg,storeidx);
+      class_store_double(dataptr,pvecback[pba->index_bg_rho_tot_wo_smg],pba->has_smg,storeidx);
     }
 
   }
