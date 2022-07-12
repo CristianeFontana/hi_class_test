@@ -743,7 +743,6 @@ int perturb_indices_of_perturbs(
   ppt->has_source_h_prime = _FALSE_;
   ppt->has_source_eta = _FALSE_;
   ppt->has_source_eta_prime = _FALSE_;
-  ppt->has_source_delta_N = _FALSE_;
   ppt->has_source_delta_Q = _FALSE_;
 
   /** - source flags and indices, for sources that all modes have in
@@ -858,6 +857,10 @@ int perturb_indices_of_perturbs(
           ppt->has_source_theta_ncdm = _TRUE_;
       }
 
+      if (ppt->has_deltaGeff_test == _TRUE_) {
+        ppt->has_source_delta_Q = _TRUE_;
+      }
+
       if (ppt->has_cl_number_count == _TRUE_) {
         ppt->has_lss = _TRUE_;
         if (ppt->has_nc_density == _TRUE_) {
@@ -894,12 +897,6 @@ int perturb_indices_of_perturbs(
           ppt->has_source_eta = _TRUE_;
           ppt->has_source_eta_prime = _TRUE_;
         }
-      }
-
-      if (ppt->has_source_delta_cdm == _TRUE_ && ppt->has_source_delta_g == _TRUE_ && ppt->has_source_Geff_smg == _TRUE_){
-        ppt->has_deltaGeff_test = _TRUE_;
-        ppt->has_source_delta_N = _TRUE_;
-        ppt->has_source_delta_Q = _TRUE_;
       }
 
       index_type = index_type_common;
@@ -940,7 +937,7 @@ int perturb_indices_of_perturbs(
       class_define_index(ppt->index_tp_h_prime,    ppt->has_source_h_prime,   index_type,1);
       class_define_index(ppt->index_tp_eta,        ppt->has_source_eta,       index_type,1);
       class_define_index(ppt->index_tp_eta_prime,  ppt->has_source_eta_prime, index_type,1);
-      class_define_index(ppt->index_tp_delta_N,    ppt->has_source_delta_N,   index_type,1);
+      class_define_index(ppt->index_tp_delta_N,    ppt->has_source_delta_Q,   index_type,1);
       class_define_index(ppt->index_tp_delta_Q,    ppt->has_source_delta_Q,   index_type,1);
       ppt->tp_size[index_md] = index_type;
 
@@ -2788,10 +2785,9 @@ int perturb_prepare_output(struct background * pba,
       class_store_columntitle(ppt->scalar_titles,"eta",pba->has_smg);
 	    
       class_store_columntitle(ppt->scalar_titles,"Geff_smg",pba->has_smg);
-      if (ppt->has_source_delta_cdm == _TRUE_ && ppt->has_source_delta_g == _TRUE_&& ppt->has_source_Geff_smg == _TRUE_){
-        class_store_columntitle(ppt->scalar_titles,"delta_N",_TRUE_);
-        class_store_columntitle(ppt->scalar_titles,"delta_Q",_TRUE_);
-      }
+      
+      class_store_columntitle(ppt->scalar_titles,"delta_N",ppt->has_deltaGeff_test);
+      class_store_columntitle(ppt->scalar_titles,"delta_Q",ppt->has_deltaGeff_test);
 
       ppt->number_of_scalar_titles =
         get_number_of_titles(ppt->scalar_titles);
@@ -3362,8 +3358,8 @@ int perturb_vector_init(
     class_define_index(ppv->index_pt_theta_cdm,pba->has_cdm && (ppt->gauge == newtonian),index_pt,1); /* cdm velocity */
 
     if (ppw->approx[ppw->index_ap_deltaGeff] == (int)deltaGeff_on) {
-      class_define_index(ppv->index_pt_delta_Q,_TRUE_,index_pt,1);
-      class_define_index(ppv->index_pt_theta_Q,_TRUE_,index_pt,1);
+      class_define_index(ppv->index_pt_delta_Q,ppt->has_deltaGeff_test == _TRUE_,index_pt,1);
+      class_define_index(ppv->index_pt_theta_Q,ppt->has_deltaGeff_test == _TRUE_,index_pt,1);
     }
     /* dcdm */
 
@@ -7713,23 +7709,20 @@ int perturb_sources(
 
       
     }
-    if (ppt->has_source_delta_N == _TRUE_){
+    if (ppt->has_source_delta_Q == _TRUE_){
     /* aqui dizer quem são delta_N e theta_N normalmente */
       double rho_cdm_plus_b = ppw->pvecback[pba->index_bg_rho_cdm] + ppw->pvecback[pba->index_bg_rho_b];
       double delta_cdm_plus_b_usual = (ppw->pvecback[pba->index_bg_rho_cdm]*y[ppw->pv->index_pt_delta_cdm] + ppw->pvecback[pba->index_bg_rho_b] * y[ppw->pv->index_pt_delta_b])/rho_cdm_plus_b;
       double delta_N = delta_cdm_plus_b_usual;
-      _set_source_(ppt->index_tp_delta_N) =  delta_N;
-    }
-
-    if (ppt->has_source_delta_Q == _TRUE_){
-    /* aqui dizer quem são delta_N e theta_N normalmente */
-      if (ppw->approx[ppw->index_ap_deltaGeff] == (int)deltaGeff_on)
-        _set_source_(ppt->index_tp_delta_Q) = y[ppw->pv->index_pt_delta_Q];
-      else {
-        double rho_cdm_plus_b = ppw->pvecback[pba->index_bg_rho_cdm] + ppw->pvecback[pba->index_bg_rho_b];
-        double delta_cdm_plus_b_usual = (ppw->pvecback[pba->index_bg_rho_cdm]*y[ppw->pv->index_pt_delta_cdm] + ppw->pvecback[pba->index_bg_rho_b] * y[ppw->pv->index_pt_delta_b])/rho_cdm_plus_b;
-        _set_source_(ppt->index_tp_delta_Q) = delta_cdm_plus_b_usual;
+      double delta_Q = delta_cdm_plus_b_usual;
+      
+      if (ppw->approx[ppw->index_ap_deltaGeff] == (int)deltaGeff_on) {
+        delta_Q = y[ppw->pv->index_pt_delta_Q];
       }
+
+      _set_source_(ppt->index_tp_delta_N) =  delta_N;
+      _set_source_(ppt->index_tp_delta_Q) =  delta_Q;
+
     }
     /* FIM DA MINHA MODIFICAÇÃO */
 
@@ -7921,8 +7914,6 @@ int perturb_print_variables(double tau,
   double delta_scf=0., theta_scf=0.;
   double V_x_smg=0., V_x_prime_smg=0.;
   double h_prime_smg=0., eta_smg=0., Geff1=0;
-  double delta_N1=0.; 
-  double delta_Q1=0.;
   /** - ncdm sector begins */
   int n_ncdm;
   double *delta_ncdm=NULL, *theta_ncdm=NULL, *shear_ncdm=NULL, *delta_p_over_delta_rho_ncdm=NULL;
@@ -8275,19 +8266,6 @@ int perturb_print_variables(double tau,
       Geff1 = h1*(1. + pow(k,2)*h5) / (1. + pow(k,2)*h3);
       
     }
-    if (ppt->has_source_delta_cdm == _TRUE_ && ppt->has_source_delta_g == _TRUE_&& ppt->has_source_Geff_smg == _TRUE_){
-    /* aqui dizer quem são delta_N e theta_N normalmente */
-      double rho_cdm_plus_b = ppw->pvecback[pba->index_bg_rho_cdm] + ppw->pvecback[pba->index_bg_rho_b];
-      delta_N1 = (ppw->pvecback[pba->index_bg_rho_cdm]*y[ppw->pv->index_pt_delta_cdm] + ppw->pvecback[pba->index_bg_rho_b] * y[ppw->pv->index_pt_delta_b])/rho_cdm_plus_b;
-      if (ppw->approx[ppw->index_ap_deltaGeff] == (int)deltaGeff_on)
-        delta_Q1 = y[ppw->pv->index_pt_delta_Q];
-      else {
-        double rho_cdm_plus_b = ppw->pvecback[pba->index_bg_rho_cdm] + ppw->pvecback[pba->index_bg_rho_b];
-        double delta_cdm_plus_b_usual = (ppw->pvecback[pba->index_bg_rho_cdm]*y[ppw->pv->index_pt_delta_cdm] + ppw->pvecback[pba->index_bg_rho_b] * y[ppw->pv->index_pt_delta_b])/rho_cdm_plus_b;
-        delta_Q1 = delta_cdm_plus_b_usual;
-      }
-        
-    }
 
     /* converting synchronous variables to newtonian ones */
     if (ppt->gauge == synchronous) {
@@ -8402,10 +8380,18 @@ int perturb_print_variables(double tau,
     class_store_double(dataptr, h_prime_smg, pba->has_smg, storeidx);
     class_store_double(dataptr, eta_smg, pba->has_smg, storeidx);
     class_store_double(dataptr, Geff1, pba->has_smg, storeidx);
-    if (ppt->has_source_delta_cdm == _TRUE_ && ppt->has_source_delta_g == _TRUE_&& ppt->has_source_Geff_smg == _TRUE_){
-      class_store_double(dataptr, delta_N1, _TRUE_, storeidx);
-      class_store_double(dataptr, delta_Q1, _TRUE_, storeidx);
+   
+    /* aqui dizer quem são delta_N e theta_N normalmente */
+    double rho_cdm_plus_b = ppw->pvecback[pba->index_bg_rho_cdm] + ppw->pvecback[pba->index_bg_rho_b];
+    double delta_cdm_plus_b_usual = (ppw->pvecback[pba->index_bg_rho_cdm]*y[ppw->pv->index_pt_delta_cdm] + ppw->pvecback[pba->index_bg_rho_b] * y[ppw->pv->index_pt_delta_b])/rho_cdm_plus_b;
+    double delta_N = delta_cdm_plus_b_usual;
+    double delta_Q = delta_cdm_plus_b_usual;
+      
+    if (ppw->approx[ppw->index_ap_deltaGeff] == (int)deltaGeff_on) {
+      delta_Q = y[ppw->pv->index_pt_delta_Q];
     }
+    class_store_double(dataptr, delta_N, ppt->has_deltaGeff_test,storeidx);
+    class_store_double(dataptr, delta_Q, ppt->has_deltaGeff_test,storeidx);
 
   }
   /** - for tensor modes: */
@@ -9468,89 +9454,10 @@ int perturb_derivs(double tau,
     if (ppt->has_deltaGeff_test == _TRUE_) {
       if (ppw->approx[ppw->index_ap_deltaGeff] == (int)deltaGeff_on){
 
-        double bra = ppw->pvecback[pba->index_bg_braiding_smg];
-      
-        double run = ppw->pvecback[pba->index_bg_mpl_running_smg];
-      
-        double kin = ppw->pvecback[pba->index_bg_kineticity_smg];
-      
-        double ten = ppw->pvecback[pba->index_bg_tensor_excess_smg];
-      
-        /* definindo densidades e outras quantidades necessárias */
-        double a = ppw->pvecback[pba->index_bg_a];
-      
-        double rho_m = ppw->pvecback[pba->index_bg_rho_tot_wo_smg];
-      
-        double H = ppw->pvecback[pba->index_bg_H];
-      
-        double H_prime = ppw->pvecback[pba->index_bg_H_prime];
-        
-        double H_prime_prime = ppw->pvecback[pba->index_bg_H_prime_prime];
-      
-        double Omega_m = rho_m / (3.*H*H);
-      
-        double qsi = H_prime / (a*H*H);
-        
-        double qsi_p = H_prime_prime / (a*a*H*H) - H_prime/(a*H) - pow(H_prime,2)/(a*a*H*H*H);
-      
-        double bra_p = ppw->pvecback[pba->index_bg_braiding_prime_smg];
-      
-        double rho_g = ppw->pvecback[pba->index_bg_rho_g];
-      
-        double rho_ur = ppw->pvecback[pba->index_bg_rho_ur];
-      
-        double Omega_g = rho_g / (3.*H*H);
-      
-        double Omega_ur = rho_ur / (3.*H*H);
-      
-        double w_matter = (Omega_g/3. + Omega_ur/3.) / Omega_m;
-      
-        /* para o caso dos neutrinos */
-        
-        double rho_ncdm_bg = 0.;
-      
-        double p_ncdm_bg = 0.;
-        
-        double w_ncdm_bg = 0.;
-        
-        double Omega_ncdm_bg = 0.;
-      
-        int n_ncdm;
-       
-        if (pba->has_ncdm == _TRUE_) {
-          for(n_ncdm=0; n_ncdm<pba->N_ncdm; n_ncdm++){
-             rho_ncdm_bg += ppw->pvecback[pba->index_bg_rho_ncdm1+n_ncdm];
-             p_ncdm_bg += ppw->pvecback[pba->index_bg_p_ncdm1+n_ncdm];
-             w_ncdm_bg += p_ncdm_bg/rho_ncdm_bg;
-             Omega_ncdm_bg += rho_ncdm_bg / (3.*H*H);
-          
-             w_matter += (w_ncdm_bg*Omega_ncdm_bg) / Omega_m;
-          }
-        }
-      
-        /* definindo as quantidades necessárias para escrever Y */
-        double M2 = ppw->pvecback[pba->index_bg_M2_smg];
-      
-        double Omega_mtildo = rho_m / (3.*H*H*M2);
-      
-        double alpha1 = bra + ten*(bra - 2.) + 2.*run;
-      
-        double alpha2 = bra*qsi + bra_p/(a*H) -2.*qsi -3.*(1.+w_matter)*Omega_mtildo;
-      
-        double mu2 = -3.*(2.*qsi*qsi +qsi_p + qsi*(3.+run))*bra -3.*qsi*alpha2;
-      
-        double h1 = (ten+1.) / M2;
-      
-        double h3 = (alpha1*(2. - bra) + 2.*alpha2) / (2.*H*H*mu2);
-      
-        double h5 = (alpha1*((run+1.) / (ten+1.)) + alpha2) / (H*H*mu2);
-        
-        
-        double Geff2 = h1*(1. + pow(k,2)*h5) / (1. + pow(k,2)*h3);
 
 	      dy[pv->index_pt_delta_Q] = y[pv->index_pt_theta_Q] ;
 	
-	      dy[pv->index_pt_theta_Q] =  - a_prime_over_a * y[pv->index_pt_theta_Q] + 1.5 * a*a*Geff2*(ppw->pvecback[pba->index_bg_rho_cdm]+ppw->pvecback[pba->index_bg_rho_b]) * y[pv->index_pt_delta_Q]  ;
+	      dy[pv->index_pt_theta_Q] =  - a_prime_over_a * y[pv->index_pt_theta_Q] + 1.5 * a*a*(ppw->pvecback[pba->index_bg_rho_cdm]+ppw->pvecback[pba->index_bg_rho_b]) * y[pv->index_pt_delta_Q]  ;
       }
     }
 

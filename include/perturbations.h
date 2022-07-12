@@ -303,7 +303,6 @@ struct perturbs
   short has_source_h_prime;      /**< do we need source for metric fluctuation h'? */
   short has_source_eta;          /**< do we need source for metric fluctuation eta? */
   short has_source_eta_prime;    /**< do we need source for metric fluctuation eta'? */
-  short has_source_delta_N;
   short has_source_delta_Q;
 
   /* remember that the temperature source function includes three

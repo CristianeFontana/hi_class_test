@@ -2076,6 +2076,13 @@ if (strcmp(string1,"nkgb") == 0 || strcmp(string1,"n-kgb") == 0 || strcmp(string
       ppt->has_perturbations = _TRUE_;
     }
 
+        /* MOD */
+    if ((strstr(string1,"gTk") != NULL) || (strstr(string1,"GTk") != NULL) || (strstr(string1,"GTK") != NULL)) {
+      ppt->has_deltaGeff_test=_TRUE_;
+      ppt->has_perturbations = _TRUE_;
+    }
+    /*END MOD*/
+
   }
 
   if (ppt->has_density_transfers == _TRUE_) {
@@ -2875,7 +2882,7 @@ if (strcmp(string1,"nkgb") == 0 || strcmp(string1,"n-kgb") == 0 || strcmp(string
 
   }
 
-  if ((ppt->has_pk_matter == _TRUE_) || (ppt->has_density_transfers == _TRUE_) || (ppt->has_velocity_transfers == _TRUE_)) {
+  if ((ppt->has_pk_matter == _TRUE_) || (ppt->has_density_transfers == _TRUE_) || (ppt->has_velocity_transfers == _TRUE_)|| (ppt->has_deltaGeff_test == _TRUE_)) {
 
     class_call(parser_read_double(pfc,"P_k_max_h/Mpc",&param1,&flag1,errmsg),
                errmsg,
@@ -3829,6 +3836,7 @@ int input_default_params(
   ppt->has_pk_matter = _FALSE_;
   ppt->has_density_transfers = _FALSE_;
   ppt->has_velocity_transfers = _FALSE_;
+  ppt->has_deltaGeff_test = _FALSE_;
   ppt->has_metricpotential_transfers = _FALSE_;
 
   ppt->has_nl_corrections_based_on_delta_m = _FALSE_;
