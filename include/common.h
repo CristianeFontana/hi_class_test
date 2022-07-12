@@ -364,8 +364,8 @@ struct precision
    * parameter controlling precision of background integration
    */
   double tol_background_integration;
-
-
+  /*mod*/
+  double a_init_deep_mat;
   /**
    * parameter controlling how deep inside radiation domination must the
    * initial time be chosen

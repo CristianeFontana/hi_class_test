@@ -2126,6 +2126,8 @@ int spectra_indices(
   class_define_index(psp->index_tr_eta,ppt->has_source_eta,index_tr,1);
   class_define_index(psp->index_tr_eta_prime,ppt->has_source_eta_prime,index_tr,1);
   class_define_index(psp->index_tr_Geff_smg,ppt->has_source_Geff_smg,index_tr,1);
+  class_define_index(psp->index_tr_delta_N,ppt->has_source_delta_N,index_tr,1);
+  class_define_index(psp->index_tr_delta_Q,ppt->has_source_delta_Q,index_tr,1);
 
   /* indices for species associated with a velocity transfer function in Fourier space */
 
@@ -3930,6 +3932,20 @@ int spectra_matter_transfers(
             [(index_tau-psp->ln_tau_size+ppt->tau_size) * ppt->k_size[index_md] + index_k];
 
         }
+       if (ppt->has_source_delta_N == _TRUE_) {
+
+          psp->matter_transfer[((index_tau*psp->ln_k_size + index_k) * psp->ic_size[index_md] + index_ic) * psp->tr_size + psp->index_tr_delta_N] = ppt->sources[index_md]
+            [index_ic * ppt->tp_size[index_md] + ppt->index_tp_delta_N]
+            [(index_tau-psp->ln_tau_size+ppt->tau_size) * ppt->k_size[index_md] + index_k];
+
+        }
+       if (ppt->has_source_delta_Q == _TRUE_) {
+
+          psp->matter_transfer[((index_tau*psp->ln_k_size + index_k) * psp->ic_size[index_md] + index_ic) * psp->tr_size + psp->index_tr_delta_Q] = ppt->sources[index_md]
+            [index_ic * ppt->tp_size[index_md] + ppt->index_tp_delta_Q]
+            [(index_tau-psp->ln_tau_size+ppt->tau_size) * ppt->k_size[index_md] + index_k];
+
+        }
 
         /* could include homogeneous component in rho_tot if uncommented (leave commented to match CMBFAST/CAMB definition) */
 
@@ -4016,6 +4032,8 @@ int spectra_output_tk_titles(struct background *pba,
       class_store_columntitle(titles,"eta",ppt->has_source_eta);
       class_store_columntitle(titles,"eta_prime",ppt->has_source_eta_prime);
       class_store_columntitle(titles,"Geff_smg",ppt->has_source_Geff_smg);
+      class_store_columntitle(titles,"delta_N",ppt->has_source_delta_N);
+      class_store_columntitle(titles,"delta_Q",ppt->has_source_delta_Q);
     }
     if (ppt->has_velocity_transfers == _TRUE_) {
       class_store_columntitle(titles,"t_g",_TRUE_);
@@ -4150,6 +4168,8 @@ int spectra_output_tk_data(
           class_store_double(dataptr,tk[psp->index_tr_eta],ppt->has_source_eta,storeidx);
           class_store_double(dataptr,tk[psp->index_tr_eta_prime],ppt->has_source_eta_prime,storeidx);
           class_store_double(dataptr,tk[psp->index_tr_Geff_smg],ppt->has_source_Geff_smg,storeidx);
+          class_store_double(dataptr,tk[psp->index_tr_delta_N],ppt->has_source_delta_N,storeidx);
+          class_store_double(dataptr,tk[psp->index_tr_delta_Q],ppt->has_source_delta_Q,storeidx);
         }
         if (ppt->has_velocity_transfers == _TRUE_) {
 

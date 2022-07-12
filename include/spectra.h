@@ -253,6 +253,8 @@ struct spectra {
   int index_tr_eta;            /**< index of synchronous gauge metric perturbation eta */
   int index_tr_eta_prime;      /**< index of synchronous gauge metric perturbation eta' */
   int index_tr_Geff_smg;
+  int index_tr_delta_N;
+  int index_tr_delta_Q;
   int tr_size;                 /**< total number of species in transfer functions */
 
   double * matter_transfer;   /**< Matter transfer functions.

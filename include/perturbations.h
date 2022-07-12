@@ -32,6 +32,7 @@ enum tca_flags {tca_on, tca_off};
 enum rsa_flags {rsa_off, rsa_on};
 enum ufa_flags {ufa_off, ufa_on};
 enum ncdmfa_flags {ncdmfa_off, ncdmfa_on};
+enum deltaGeff_flags {deltaGeff_off, deltaGeff_on};
 
 /**
  * implemented quasi-static approximation scheme (qs_smg).
@@ -164,6 +165,7 @@ struct perturbs
   short has_pk_matter;                /**< do we need matter Fourier spectrum? */
   short has_density_transfers;        /**< do we need to output individual matter density transfer functions? */
   short has_velocity_transfers;       /**< do we need to output individual matter velocity transfer functions? */
+  short has_deltaGeff_test;
   short has_metricpotential_transfers;/**< do we need to output individual transfer functions for scalar metric perturbations? */
 
   short has_nl_corrections_based_on_delta_m;  /**< do we want to compute non-linear corrections with an algorithm relying on delta_m (like halofit)? */
@@ -301,6 +303,8 @@ struct perturbs
   short has_source_h_prime;      /**< do we need source for metric fluctuation h'? */
   short has_source_eta;          /**< do we need source for metric fluctuation eta? */
   short has_source_eta_prime;    /**< do we need source for metric fluctuation eta'? */
+  short has_source_delta_N;
+  short has_source_delta_Q;
 
   /* remember that the temperature source function includes three
      terms that we call 0,1,2 (since the strategy in class v > 1.7 is
@@ -347,7 +351,8 @@ struct perturbs
   int index_tp_h_prime;      /**< index value for metric fluctuation h' */
   int index_tp_eta;          /**< index value for metric fluctuation eta */
   int index_tp_eta_prime;    /**< index value for metric fluctuation eta' */
-
+  int index_tp_delta_N;
+  int index_tp_delta_Q;
   int * tp_size; /**< number of types tp_size[index_md] included in computation for each mode */
 
   //@}
@@ -478,6 +483,8 @@ struct perturb_vector
 /* perturbed recombination */
   int index_pt_perturbed_recombination_delta_temp;		/**< Gas temperature perturbation */
   int index_pt_perturbed_recombination_delta_chi;		/**< Inionization fraction perturbation */
+  int index_pt_delta_Q;
+  int index_pt_theta_Q;
 
   /** The index to the first Legendre multipole of the DR expansion. Not
       that this is not exactly the usual delta, see Kaplinghat et al.,
@@ -613,6 +620,7 @@ struct perturb_workspace
   int index_ap_ufa; /**< index for ur fluid approximation */
   int index_ap_ncdmfa; /**< index for ncdm fluid approximation */
   int index_ap_qs_smg; /**< index for smg quasi-static approximation */
+  int index_ap_deltaGeff;
   int ap_size;      /**< number of relevant approximations for a given mode */
 
   int * approx;     /**< array of approximation flags holding at a given time: approx[index_ap] */
